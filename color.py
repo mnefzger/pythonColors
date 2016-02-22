@@ -6,22 +6,25 @@ import colorsys
 from pygame.locals import *
 from PIL import Image
 
+WIDTH, HEIGHT = 512,512
+
 running = 1
 
-im = Image.open("test.png")
-rgb_im = im.convert('RGB')
-width, height = im.size
-s_w, s_h = (width, height)
-#s_w, s_h = (512,512)
-p_count = s_w*s_h
+s_w, s_h = 0,0
+p_count = 0
 
 colors = []
 colors_pos  = []
+pixels = []
 
-pixels = [None]*s_w
-for x in range(0, s_w):
-	for y in range(0, s_h):
-		pixels[x] = [None]*s_h
+def setWH(w,h):
+	global s_w, s_h, pixels, p_count
+	s_w, s_h = w,h
+	p_count = s_w*s_h
+	pixels = [None]*s_w
+	for x in range(0, s_w):
+		for y in range(0, s_h):
+			pixels[x] = [None]*s_h
 
 def newColor(r,g,b):
 	#if (r,g,b) in colors: 
@@ -31,6 +34,10 @@ def newColor(r,g,b):
 
 # when using a photo
 def setup():
+	im = Image.open("test.png")
+	rgb_im = im.convert('RGB')
+	width, height = im.size
+	setWH(width, height)
 	i = 0
 	j = 0
 	while i < height:
@@ -46,7 +53,6 @@ def setup():
 		print(i)
 		i += 1
 		j = 0
-	#colors.sort()
 	sorted(colors, key=lambda color:color[3])
 	#shuffle(colors)
 	print(len(colors))
@@ -54,9 +60,10 @@ def setup():
 #with random colors
 def createColors():
 	global colors
+	setWH(WIDTH, HEIGHT)
 	i, j = 0,0
-	while i < height:
-		while j < width:
+	while i < s_h:
+		while j < s_w:
 			r,g,b = random.randint(0,255), random.randint(0,255), random.randint(0,255)
 			if not newColor(r,g,b):
 				j += 1
@@ -68,9 +75,7 @@ def createColors():
 		print(i)
 		i += 1
 		j = 0
-	#colors = sorted(colors, key=lambda color:color[3], reverse=True)
-	#print colors
-
+	colors = sorted(colors, key=lambda color:color[3], reverse=False)
 
 def getNeighbours(pixel):
 	x_from = -1
@@ -185,6 +190,7 @@ def placeColor(index):
 		return findNeighbour(color)
 
 def placeColorAvg(index):
+	global colors
 	color = colors[index]
 	if index == 0:
 		return (int(s_w/2), int(s_h/2))
