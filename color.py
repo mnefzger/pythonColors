@@ -3,10 +3,11 @@ import random
 from random import shuffle
 import math
 import colorsys
+import time
 from pygame.locals import *
 from PIL import Image
 
-WIDTH, HEIGHT = 512,512
+WIDTH, HEIGHT = 1024,128
 
 running = 1
 
@@ -16,6 +17,8 @@ p_count = 0
 colors = []
 colors_pos  = []
 pixels = []
+
+screenshot = False
 
 def setWH(w,h):
 	global s_w, s_h, pixels, p_count
@@ -34,7 +37,8 @@ def newColor(r,g,b):
 
 # when using a photo
 def setup():
-	im = Image.open("test.png")
+	global colors
+	im = Image.open("monet.png")
 	rgb_im = im.convert('RGB')
 	width, height = im.size
 	setWH(width, height)
@@ -53,8 +57,8 @@ def setup():
 		print(i)
 		i += 1
 		j = 0
-	sorted(colors, key=lambda color:color[3])
-	#shuffle(colors)
+	#colors = sorted(colors, key=lambda color:color[3], reverse=True)
+	shuffle(colors)
 	print(len(colors))
 
 #with random colors
@@ -75,7 +79,7 @@ def createColors():
 		print(i)
 		i += 1
 		j = 0
-	colors = sorted(colors, key=lambda color:color[3], reverse=False)
+	colors = sorted(colors, key=lambda color:color[5], reverse=True)
 
 def getNeighbours(pixel):
 	x_from = -1
@@ -84,12 +88,12 @@ def getNeighbours(pixel):
 	y_to = 2
 	if pixel[0] == 0:
 		x_from = 0
-	if pixel[0] == s_w-2:
-		x_to = 0
+	if pixel[0] == s_w-1:
+		x_to = 1
 	if pixel[1] == 0:
 		y_from = 0
-	if pixel[1] == s_h-2:
-		y_to = 0
+	if pixel[1] == s_h-1:
+		y_to = 1
 
 	n = []
 	for x in range(x_from, x_to):
@@ -146,8 +150,14 @@ def average(color, pix):
 				bestPix = ((n[1][0],n[1][1]), avgDist)
 	
 	if bestPix is None:
-		return ((0,0), 1000000)
+		return ((0,0), 999999)
 	return bestPix
+
+def takeScreenshot():
+	global screenshot
+	if not screenshot:
+		pygame.image.save(screen, str(time.time()) + ".png")
+		screenshot = True
 
 def findNeighbour(color):
 	closest = 1000000
@@ -161,6 +171,7 @@ def findNeighbour(color):
 				if dist <= 3:
 					return freeSpace(result[1])
 	if(result == None):
+		takeScreenshot()
 		running = 0
 		return (-1,-1)
 	return freeSpace(result[1])
@@ -174,13 +185,13 @@ def findNeighbourAverage(color):
 			if temp[1] < closest:
 				closest = temp[1]
 				result = temp
-				if closest <= 3:
+				if closest <= 1000:
 					return result[0]
 	if(result == None):
+		takeScreenshot()
 		running = 0
 		return (-1,-1)
 	return result[0]
-
 
 def placeColor(index):
 	color = colors[index]
@@ -197,11 +208,11 @@ def placeColorAvg(index):
 	else:
 		return findNeighbourAverage(color)
 
-#setup()
-createColors()
+setup()
+#createColors()
 pygame.init()
 screen = pygame.display.set_mode((s_w, s_h))
-screen.fill((255,255,255))
+screen.fill((0,0,0))
 
 running = 1
 index = 0
