@@ -7,7 +7,7 @@ import time
 from pygame.locals import *
 from PIL import Image
 
-WIDTH, HEIGHT = 1024,128
+WIDTH, HEIGHT = 1024,1024
 
 running = 1
 
@@ -68,7 +68,7 @@ def createColors():
 	i, j = 0,0
 	while i < s_h:
 		while j < s_w:
-			r,g,b = random.randint(0,255), random.randint(0,255), random.randint(0,255)
+			r,g,b = random.randint(0,100), random.randint(0,25), random.randint(0,255)
 			if not newColor(r,g,b):
 				j += 1
 				continue
@@ -79,7 +79,27 @@ def createColors():
 		print(i)
 		i += 1
 		j = 0
-	colors = sorted(colors, key=lambda color:color[5], reverse=True)
+	colors = sorted(colors, key=lambda color:color[3], reverse=True)
+
+def createColorsHSV():
+	global colors
+	setWH(WIDTH, HEIGHT)
+	i, j = 0,0
+	while i < s_h:
+		while j < s_w:
+			h,s,v = random.uniform(0,0.5), random.uniform(0.25,1), random.uniform(0.15,1)
+			if not newColor(h,s,v):
+				j += 1
+				continue
+			else:
+				r,g,b = colorsys.hsv_to_rgb(h,s,v)
+				r,g,b = r*255, g*255, b*255
+				colors.append((r,g,b,h,s,v))
+				j += 1	
+		print(i)
+		i += 1
+		j = 0
+	colors = sorted(colors, key=lambda color:color[3], reverse=True)
 
 def getNeighbours(pixel):
 	x_from = -1
@@ -123,9 +143,12 @@ def freeSpace(pixel):
 		return (0,0)
 	return random.choice(free)
 
-# eucl. distance between two rgb colors
+# sqr eucl. distance between two rgb colors
 def distance(c1, c2):
 	return (c1[0]-c2[0])*(c1[0]-c2[0]) + (c1[1]-c2[1])*(c1[1]-c2[1]) + (c1[2]-c2[2])*(c1[2]-c2[2])
+
+def distanceHSV(c1, c2):
+	return (c1[3]-c2[3])*(c1[3]-c2[3]) + (c1[4]-c2[4])*(c1[4]-c2[4]) + (c1[5]-c2[5])*(c1[5]-c2[5])
 
 # returns the best free spot based on the average distance to its neighbor colors
 def average(color, pix):
@@ -168,7 +191,7 @@ def findNeighbour(color):
 			if dist < closest:
 				closest = dist
 				result = pix
-				if dist <= 3:
+				if dist <= 30:
 					return freeSpace(result[1])
 	if(result == None):
 		takeScreenshot()
@@ -185,7 +208,7 @@ def findNeighbourAverage(color):
 			if temp[1] < closest:
 				closest = temp[1]
 				result = temp
-				if closest <= 1000:
+				if closest <= 10:
 					return result[0]
 	if(result == None):
 		takeScreenshot()
@@ -208,8 +231,9 @@ def placeColorAvg(index):
 	else:
 		return findNeighbourAverage(color)
 
-setup()
+#setup()
 #createColors()
+createColorsHSV()
 pygame.init()
 screen = pygame.display.set_mode((s_w, s_h))
 screen.fill((0,0,0))
@@ -223,7 +247,7 @@ while running:
     if event.type == QUIT:
       running = 0
 
-  coord = placeColorAvg(index)
+  coord = placeColor(index)
   screen.fill((colors[index][0],colors[index][1],colors[index][2]), Rect(coord[0],coord[1], 1, 1), 0) 
   colors_pos.append((colors[index], coord))
   pixels[coord[0]][coord[1]] = colors[index]
